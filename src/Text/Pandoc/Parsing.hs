@@ -817,6 +817,8 @@ instance Default ParserState where
 instance HasMeta ParserState where
   setMeta field val st =
     st{ stateMeta = setMeta field val $ stateMeta st }
+  deleteMeta field st =
+    st{ stateMeta = deleteMeta field $ stateMeta st }
 
 defaultParserState :: ParserState
 defaultParserState =
