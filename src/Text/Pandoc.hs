@@ -92,7 +92,7 @@ module Text.Pandoc
                , writeRTF
                , writeODT
                , writeDocx
-               -- , writeEPUB
+               , writeEPUB
                , writeFB2
                , writeOrg
                , writeAsciiDoc
@@ -129,7 +129,7 @@ import Text.Pandoc.Writers.Texinfo
 import Text.Pandoc.Writers.HTML
 import Text.Pandoc.Writers.ODT
 import Text.Pandoc.Writers.Docx
--- import Text.Pandoc.Writers.EPUB
+import Text.Pandoc.Writers.EPUB
 import Text.Pandoc.Writers.FB2
 import Text.Pandoc.Writers.Docbook
 import Text.Pandoc.Writers.OPML
@@ -217,13 +217,12 @@ writers :: [ ( String, Writer ) ]
 writers = [
    ("native"       , PureStringWriter writeNative)
   ,("json"         , PureStringWriter $ \_ -> UTF8.toStringLazy . encode)
---  ,("json"         , PureStringWriter $ \_ -> encodeJSON)
   ,("docx"         , IOByteStringWriter writeDocx)
  ,("odt"          , IOByteStringWriter writeODT)
---  ,("epub"         , IOByteStringWriter $ \o ->
---                       writeEPUB o{ writerEpubVersion = Just EPUB2 })
---  ,("epub3"        , IOByteStringWriter $ \o ->
---                       writeEPUB o{ writerEpubVersion = Just EPUB3 })
+ ,("epub"         , IOByteStringWriter $ \o ->
+                      writeEPUB o{ writerEpubVersion = Just EPUB2 })
+ ,("epub3"        , IOByteStringWriter $ \o ->
+                       writeEPUB o{ writerEpubVersion = Just EPUB3 })
   ,("fb2"          , IOStringWriter writeFB2)
   ,("html"         , PureStringWriter writeHtmlString)
   ,("html5"        , PureStringWriter $ \o ->
@@ -245,11 +244,11 @@ writers = [
   ,("opml"         , PureStringWriter writeOPML)
   ,("opendocument" , PureStringWriter writeOpenDocument)
   ,("latex"        , PureStringWriter writeLaTeX)
---  ,("beamer"       , PureStringWriter $ \o ->
---     writeLaTeX o{ writerBeamer = True })
+  ,("beamer"       , PureStringWriter $ \o ->
+     writeLaTeX o{ writerBeamer = True })
   ,("context"      , PureStringWriter writeConTeXt)
   ,("texinfo"      , PureStringWriter writeTexinfo)
---  ,("man"          , PureStringWriter writeMan)
+  ,("man"          , PureStringWriter writeMan)
   ,("markdown"     , PureStringWriter writeMarkdown)
   ,("markdown_strict" , PureStringWriter writeMarkdown)
   ,("markdown_phpextra" , PureStringWriter writeMarkdown)
