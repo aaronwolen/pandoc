@@ -54,7 +54,10 @@ writeMediaWiki opts document =
 -- | Return MediaWiki representation of document.
 pandocToMediaWiki :: WriterOptions -> Pandoc -> State WriterState String
 pandocToMediaWiki opts (Pandoc meta blocks) = do
-  metadata <- metaToJSON (fmap trimr . blockListToMediaWiki opts) meta
+  metadata <- metaToJSON
+              (fmap trimr . blockListToMediaWiki opts)
+              (inlineListToMediaWiki opts)
+              meta
   body <- blockListToMediaWiki opts blocks
   notesExist <- get >>= return . stNotes
   let notes = if notesExist

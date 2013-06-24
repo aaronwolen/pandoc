@@ -110,7 +110,10 @@ pandocToHtml :: WriterOptions
              -> Pandoc
              -> State WriterState (Html, Value)
 pandocToHtml opts (Pandoc meta blocks) = do
-  metadata <- metaToJSON (fmap (trimr . renderHtml) . blockListToHtml opts) meta
+  metadata <- metaToJSON
+              (fmap renderHtml . blockListToHtml opts)
+              (fmap renderHtml . inlineListToHtml opts)
+              meta
   let authsMeta = map stringify $ docAuthors meta
   let dateMeta  = stringify $ docDate meta
   let slideLevel = maybe (getSlideLevel blocks) id $ writerSlideLevel opts

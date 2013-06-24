@@ -231,34 +231,44 @@ yamlTitleBlock = try $ do
   blankline
   rawYaml <- unlines <$> manyTill anyLine stopLine
   optional blanklines
+  opts <- stateOptions <$> getState
   return $ return $
     case Yaml.decode $ UTF8.fromString rawYaml of
        Just (Yaml.Object hashmap) ->
                 H.foldrWithKey (\k v f ->
                      if ignorable k
                         then f
-                        else B.setMeta (T.unpack k) (yamlToMeta v) . f)
+                        else B.setMeta (T.unpack k) (yamlToMeta opts v) . f)
                   id hashmap
        _                    -> fail "Could not parse yaml object"
 
--- ignore fields ending with _
+-- ignore fields starting with _
 ignorable :: Text -> Bool
-ignorable t = (T.pack "_") `T.isSuffixOf` t
+ignorable t = (T.pack "_") `T.isPrefixOf` t
 
-toBlocks :: ReaderOptions -> Text -> [Block]
-toBlocks opts x = let (Pandoc _ bs) = readMarkdown opts (T.unpack x) in bs
+toMetaValue :: ReaderOptions -> Text -> MetaValue
+toMetaValue opts x =
+  case readMarkdown opts (T.unpack x) of
+       Pandoc _ [Plain xs] -> MetaInlines xs
+       Pandoc _ [Para xs]
+         | endsWithNewline x -> MetaBlocks [Para xs]
+         | otherwise         -> MetaInlines xs
+       Pandoc _ bs           -> MetaBlocks bs
+  where endsWithNewline t = (T.pack "\n") `T.isSuffixOf` t
 
-yamlToMeta :: Yaml.Value -> MetaValue
-yamlToMeta (Yaml.String t) = MetaBlocks $ toBlocks def {- TODO -} t
-yamlToMeta (Yaml.Number n) = MetaString $ show n
-yamlToMeta (Yaml.Bool b) = MetaString $ map toLower $ show b
-yamlToMeta (Yaml.Array xs) = B.toMetaValue $ map yamlToMeta $ V.toList xs
-yamlToMeta (Yaml.Object o) = MetaMap $ H.foldrWithKey (\k v m ->
+yamlToMeta :: ReaderOptions -> Yaml.Value -> MetaValue
+yamlToMeta opts (Yaml.String t) = toMetaValue opts t
+yamlToMeta _    (Yaml.Number n) = MetaString $ show n
+yamlToMeta _    (Yaml.Bool b) = MetaString $ map toLower $ show b
+yamlToMeta opts (Yaml.Array xs) = B.toMetaValue $ map (yamlToMeta opts)
+                                                $ V.toList xs
+yamlToMeta opts (Yaml.Object o) = MetaMap $ H.foldrWithKey (\k v m ->
                                 if ignorable k
                                    then m
-                                   else M.insert (T.unpack k) (yamlToMeta v) m)
+                                   else M.insert (T.unpack k)
+                                           (yamlToMeta opts v) m)
                                M.empty o
-yamlToMeta _ = MetaString ""
+yamlToMeta _ _ = MetaString ""
 
 stopLine :: MarkdownParser ()
 stopLine = try $ (string "---" <|> string "...") >> blankline >> return ()

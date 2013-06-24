@@ -132,7 +132,9 @@ pandocToMarkdown opts (Pandoc meta blocks) = do
                     then Just $ writerColumns opts
                     else Nothing
   metadata <- metaToJSON
-              (fmap (trimr . render colwidth) . blockListToMarkdown opts) meta
+              (fmap (render colwidth) . blockListToMarkdown opts)
+              (fmap (render colwidth) . inlineListToMarkdown opts)
+              meta
   body <- blockListToMarkdown opts blocks
   st <- get
   notes' <- notesToMarkdown opts (reverse $ stNotes st)

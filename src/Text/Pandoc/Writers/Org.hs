@@ -63,7 +63,10 @@ pandocToOrg (Pandoc meta blocks) = do
   let colwidth = if writerWrapText opts
                     then Just $ writerColumns opts
                     else Nothing
-  metadata <- metaToJSON (fmap (trimr . render colwidth) . blockListToOrg) meta
+  metadata <- metaToJSON
+               (fmap (render colwidth) . blockListToOrg)
+               (fmap (render colwidth) . inlineListToOrg)
+               meta
   body <- blockListToOrg blocks
   notes <- liftM (reverse . stNotes) get >>= notesToOrg
   -- note that the notes may contain refs, so we do them first

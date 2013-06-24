@@ -73,7 +73,9 @@ pandocToTexinfo options (Pandoc meta blocks) = do
   let colwidth = if writerWrapText options
                     then Just $ writerColumns options
                     else Nothing
-  metadata <- metaToJSON (fmap (trimr . render colwidth) . blockListToTexinfo)
+  metadata <- metaToJSON
+              (fmap (render colwidth) . blockListToTexinfo)
+              (fmap (render colwidth) . inlineListToTexinfo)
                    meta
   main <- blockListToTexinfo blocks
   st <- get

@@ -63,8 +63,10 @@ pandocToConTeXt options (Pandoc meta blocks) = do
   let colwidth = if writerWrapText options
                     then Just $ writerColumns options
                     else Nothing
-  metadata <- metaToJSON (fmap (trimr . render colwidth) . blockListToConTeXt)
-                 meta
+  metadata <- metaToJSON
+              (fmap (render colwidth) . blockListToConTeXt)
+              (fmap (render colwidth) . inlineListToConTeXt)
+              meta
   body <- mapM (elementToConTeXt options) $ hierarchicalize blocks
   let main = (render colwidth . vcat) body
   let context =   setField "toc" (writerTableOfContents options)

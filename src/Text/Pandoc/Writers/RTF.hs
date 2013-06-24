@@ -76,7 +76,8 @@ writeRTF :: WriterOptions -> Pandoc -> String
 writeRTF options (Pandoc meta blocks) =
   let spacer = not $ all null $ docTitle meta : docDate meta : docAuthors meta
       Just metadata = metaToJSON
-              (Just . trimr . concatMap (blockToRTF 0 AlignDefault))
+              (Just . concatMap (blockToRTF 0 AlignDefault))
+              (Just . inlineListToRTF)
               meta
       body = concatMap (blockToRTF 0 AlignDefault) blocks
       isTOCHeader (Header lev _ _) = lev <= writerTOCDepth options

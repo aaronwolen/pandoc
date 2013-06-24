@@ -49,7 +49,10 @@ writeOPML opts (Pandoc meta blocks) =
                     else Nothing
       meta' = B.setMeta "date" (B.str $ convertDate $ docDate meta) meta
       Just metadata = metaToJSON
-                      (Just . trimr . writeMarkdown def . Pandoc nullMeta) meta'
+                      (Just . writeMarkdown def . Pandoc nullMeta)
+                      (Just . trimr . writeMarkdown def . Pandoc nullMeta .
+                         (\ils -> [Plain ils]))
+                      meta'
       main     = render colwidth $ vcat (map (elementToOPML opts) elements)
       context = setField "body" main
               $ foldl (\acc (x,y) -> setField x y acc)

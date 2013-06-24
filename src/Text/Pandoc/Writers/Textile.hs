@@ -54,7 +54,8 @@ writeTextile opts document =
 -- | Return Textile representation of document.
 pandocToTextile :: WriterOptions -> Pandoc -> State WriterState String
 pandocToTextile opts (Pandoc meta blocks) = do
-  metadata <- metaToJSON (fmap trimr . blockListToTextile opts) meta
+  metadata <- metaToJSON
+               (blockListToTextile opts) (inlineListToTextile opts) meta
   body <- blockListToTextile opts blocks
   notes <- liftM (unlines . reverse . stNotes) get
   let main = body ++ if null notes then "" else ("\n\n" ++ notes)

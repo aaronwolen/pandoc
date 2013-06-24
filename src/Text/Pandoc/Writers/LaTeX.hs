@@ -103,7 +103,10 @@ pandocToLaTeX options (Pandoc meta blocks) = do
   let colwidth = if writerWrapText options
                     then Just $ writerColumns options
                     else Nothing
-  metadata <- metaToJSON (fmap (trimr . render colwidth) . blockListToLaTeX) meta
+  metadata <- metaToJSON
+              (fmap (render colwidth) . blockListToLaTeX)
+              (fmap (render colwidth) . inlineListToLaTeX)
+              meta
   let (blocks', lastHeader) = if writerCiteMethod options == Citeproc then
                                 (blocks, [])
                               else case last blocks of

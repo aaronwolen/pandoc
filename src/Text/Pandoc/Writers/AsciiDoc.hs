@@ -71,8 +71,10 @@ pandocToAsciiDoc opts (Pandoc meta blocks) = do
   let colwidth = if writerWrapText opts
                     then Just $ writerColumns opts
                     else Nothing
-  metadata <- metaToJSON (fmap (trimr . render colwidth) .
-                           blockListToAsciiDoc opts) meta
+  metadata <- metaToJSON
+              (fmap (render colwidth) . blockListToAsciiDoc opts)
+              (fmap (render colwidth) . inlineListToAsciiDoc opts)
+              meta
   let addTitleLine (String t) = String $
          t <> "\n" <> T.replicate (T.length t) "="
       addTitleLine x = x

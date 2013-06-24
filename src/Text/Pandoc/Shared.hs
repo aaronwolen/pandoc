@@ -82,7 +82,7 @@ module Text.Pandoc.Shared (
 
 import Text.Pandoc.Definition
 import Text.Pandoc.Generic
-import Text.Pandoc.Builder (Blocks)
+import Text.Pandoc.Builder (Blocks, ToMetaValue(..))
 import qualified Text.Pandoc.Builder as B
 import qualified Text.Pandoc.UTF8 as UTF8
 import System.Environment (getProgName)
@@ -503,11 +503,13 @@ isTightList = and . map firstIsPlain
 
 -- | Set a field of a 'Meta' object.  If the field already has a value,
 -- convert it into a list with the new value appended to the old value(s).
-addMetaField :: String
-             -> MetaValue
+addMetaField :: ToMetaValue a
+             => String
+             -> a
              -> Meta
              -> Meta
-addMetaField key val (Meta meta) = Meta $ M.insertWith combine key val meta
+addMetaField key val (Meta meta) =
+  Meta $ M.insertWith combine key (toMetaValue val) meta
   where combine newval (MetaList xs) = MetaList (xs ++ [newval])
         combine newval x             = MetaList [x, newval]
 
@@ -515,32 +517,34 @@ addMetaField key val (Meta meta) = Meta $ M.insertWith combine key val meta
 -- provided to ease the transition from the old API.
 makeMeta :: [Inline] -> [[Inline]] -> [Inline] -> Meta
 makeMeta title authors date =
-    addMetaField "title" (toblocks title)
-    $ addMetaField "author" (MetaList $ map toblocks authors)
-    $ addMetaField "date" (toblocks date)
+      addMetaField "title" (B.fromList title)
+    $ addMetaField "author" (map B.fromList authors)
+    $ addMetaField "date" (B.fromList date)
     $ nullMeta
-  where toblocks xs = MetaBlocks [Plain xs]
 
 -- | Create JSON value for template from a 'Meta' and an association list
 -- of variables, specified at the command line or in the writer.
 -- Variables overwrite metadata fields with the same names.
 metaToJSON :: (Monad m, Functor m)
            => ([Block] -> m String) -- ^ Writer for output format
+           => ([Inline] -> m String) -- ^ Writer for output format
            -> Meta                  -- ^ Metadata
            -> m Value
-metaToJSON writer (Meta metamap) =
-  toJSON `fmap` Traversable.mapM (metaValueToJSON writer) metamap
+metaToJSON blockWriter inlineWriter (Meta metamap) = toJSON
+  `fmap` Traversable.mapM (metaValueToJSON blockWriter inlineWriter) metamap
 
 metaValueToJSON :: (Monad m, Functor m)
                 => ([Block] -> m String)
+                -> ([Inline] -> m String)
                 -> MetaValue
                 -> m Value
-metaValueToJSON writer (MetaMap metamap) =
-  toJSON `fmap` Traversable.mapM (metaValueToJSON writer) metamap
-metaValueToJSON writer (MetaList xs) =
-  toJSON `fmap` Traversable.mapM (metaValueToJSON writer) xs
-metaValueToJSON _ (MetaString s) = return $ toJSON s
-metaValueToJSON writer (MetaBlocks bs) = toJSON `fmap` writer bs
+metaValueToJSON blockWriter inlineWriter (MetaMap metamap) = toJSON
+  `fmap` Traversable.mapM (metaValueToJSON blockWriter inlineWriter) metamap
+metaValueToJSON blockWriter inlineWriter (MetaList xs) =
+  toJSON `fmap` Traversable.mapM (metaValueToJSON blockWriter inlineWriter) xs
+metaValueToJSON _ _ (MetaString s) = return $ toJSON s
+metaValueToJSON blockWriter _ (MetaBlocks bs) = toJSON `fmap` blockWriter bs
+metaValueToJSON _ inlineWriter (MetaInlines bs) = toJSON `fmap` inlineWriter bs
 
 setField :: ToJSON a
          => String

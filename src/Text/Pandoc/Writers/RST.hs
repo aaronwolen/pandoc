@@ -72,7 +72,8 @@ pandocToRST (Pandoc meta blocks) = do
                     Just (MetaBlocks [Plain xs]) -> xs
                     _ -> []
   title <- titleToRST (docTitle meta) subtit
-  metadata <- metaToJSON (fmap (trimr . render colwidth) . blockListToRST)
+  metadata <- metaToJSON (fmap (render colwidth) . blockListToRST)
+                         (fmap (trimr . render colwidth) . inlineListToRST)
               $ deleteMeta "title" $ deleteMeta "subtitle" meta
   body <- blockListToRST blocks
   notes <- liftM (reverse . stNotes) get >>= notesToRST
